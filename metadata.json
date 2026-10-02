@@ -1,0 +1,7 @@
+{
+  "name": "BloomScript - AI Blog Studio",
+  "description": "A production-grade AI Blog Generator with cinematic Light Pink & Botanical aesthetic, PostgreSQL 18, FastAPI backend, Docker compose, rich editor, and multi-format export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
