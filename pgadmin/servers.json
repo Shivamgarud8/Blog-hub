@@ -1,0 +1,14 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "BloomScript Postgres",
+      "Group": "Blog Hub",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "blog_gen",
+      "Username": "blog_user",
+      "PassFile": "/pgpass",
+      "SSLMode": "prefer"
+    }
+  }
+}

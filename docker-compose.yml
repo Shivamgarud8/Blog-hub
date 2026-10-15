@@ -73,12 +73,43 @@ services:
     networks:
       - blog_net
 
+  pgadmin:
+    image: dpage/pgadmin4:9.8
+    container_name: blog-gen-pgadmin
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # init.sh writes a pgpass file so the pre-registered server connects without a password prompt
+    entrypoint: ["/bin/sh", "/pgadmin-init.sh"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@bloomscript.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-change_this_pgadmin_password}
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      POSTGRES_USER: ${POSTGRES_USER:-blog_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_password}
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
+      - ./pgadmin/init.sh:/pgadmin-init.sh:ro
+    ports:
+      # Bound to localhost for security; use an SSH tunnel to reach it on a remote server
+      - "127.0.0.1:5050:80"
+    networks:
+      - blog_net
+
 volumes:
   postgres_data:
     name: blog_gen_postgres_data
     driver: local
   backend_uploads:
     name: blog_gen_backend_uploads
+    driver: local
+  pgadmin_data:
+    name: blog_gen_pgadmin_data
     driver: local
 
 networks:
