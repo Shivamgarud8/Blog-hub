@@ -43,16 +43,27 @@ export function App() {
 
   // Initial load
   useEffect(() => {
-    const user = api.getCurrentUser();
-    setCurrentUser(user);
-    loadBlogsAndStats();
+    setCurrentUser(api.getCurrentUser());
+    api.fetchCurrentUser().then((user) => {
+      setCurrentUser(user);
+      loadBlogsAndStats();
+    });
   }, []);
 
   const loadBlogsAndStats = async () => {
-    const loadedBlogs = await api.getBlogs();
-    setBlogs(loadedBlogs);
-    const loadedStats = await api.getUserStats();
-    setStats(loadedStats);
+    try {
+      const loadedBlogs = await api.getBlogs();
+      setBlogs(loadedBlogs);
+      const loadedStats = await api.getUserStats();
+      setStats(loadedStats);
+    } catch (err: any) {
+      if (!api.getToken()) {
+        setCurrentUser(null);
+        setBlogs([]);
+        setStats(null);
+      }
+      showToast(err?.message || 'Could not load your blogs.', 'error');
+    }
   };
 
   // Auth Handlers
@@ -75,6 +86,8 @@ export function App() {
   const handleLogout = () => {
     api.setCurrentUser(null);
     setCurrentUser(null);
+    setBlogs([]);
+    setStats(null);
     showToast('Signed out successfully.');
     setCurrentTab('landing');
   };
@@ -125,29 +138,12 @@ export function App() {
     showToast('Regenerating blog copy with AI engine...');
     setIsGenerating(true);
     try {
-      const req: BlogGenerateRequest = {
-        topic: blog.topic,
-        blog_length: 'Medium',
-        blog_type: blog.blog_type,
-        tone: blog.tone,
-        target_audience: blog.target_audience,
-        language: blog.language,
-        keywords: blog.keywords,
-        author_name: blog.author_name,
-        featured_image_url: blog.featured_image,
-      };
-      const regenerated = await api.generateBlog(req);
-      // Update existing content
-      await api.updateBlog(blog.id, {
-        title: regenerated.title,
-        subtitle: regenerated.subtitle,
-        content: regenerated.content,
-        word_count: regenerated.word_count,
-      });
-      // Remove temporary entry
-      await api.deleteBlog(regenerated.id);
+      const regenerated = await api.regenerateBlog(blog.id);
+      if (activeEditingBlog?.id === blog.id) setActiveEditingBlog(regenerated);
       await loadBlogsAndStats();
       showToast('Article regenerated successfully!');
+    } catch (err: any) {
+      showToast(err?.message || 'Failed to regenerate blog.', 'error');
     } finally {
       setIsGenerating(false);
     }

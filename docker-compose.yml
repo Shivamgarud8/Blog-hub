@@ -66,8 +66,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
-    environment:
-      - VITE_API_URL=http://localhost:8000
+    # nginx serves the React build and proxies /api and /uploads to the backend,
+    # so the UI works from any host/IP without rebuilding
     ports:
       - "3000:3000"
     networks:

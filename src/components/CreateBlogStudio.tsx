@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, Wand2, Upload, X, Image as ImageIcon, ChevronDown, ChevronUp, Sliders, Languages, Users, Layers, MessageSquare, BookOpen, AlertCircle, RefreshCw } from 'lucide-react';
 import { BlogGenerateRequest, User } from '../types';
+import { api } from '../services/api';
 
 interface CreateBlogStudioProps {
   currentUser: User | null;
@@ -121,16 +122,10 @@ export const CreateBlogStudio: React.FC<CreateBlogStudioProps> = ({
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          setUploadedImages((prev) => [
-            ...prev,
-            { url: event.target!.result as string, name: file.name },
-          ]);
-        }
-      };
-      reader.readAsDataURL(file);
+      api
+        .uploadImage(file)
+        .then((url) => setUploadedImages((prev) => [...prev, { url, name: file.name }]))
+        .catch((err) => setImageError(err?.message || `Could not upload '${file.name}'.`));
     });
   };
 
@@ -146,18 +141,7 @@ export const CreateBlogStudio: React.FC<CreateBlogStudioProps> = ({
     setIsGeneratingAiImage(true);
     setImageError(null);
     try {
-      // Pick a curated image according to topic
-      const curated = [
-        'https://images.unsplash.com/photo-1518495973542-4542c06a5843?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1490730141103-6cac27aaab94?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
-        'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=1200&q=80',
-      ];
-      await new Promise((r) => setTimeout(r, 1000));
-      const idx = Math.abs(topic.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) % curated.length;
-      setFeaturedImageUrl(curated[idx]);
+      setFeaturedImageUrl(await api.generateFeaturedImage(topic.trim(), selectedTone));
     } catch {
       setImageError('Could not generate image. Please try again.');
     } finally {

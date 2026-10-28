@@ -2,23 +2,20 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies (no lockfile is committed; legacy peer deps resolves the vite/tailwind peer range)
 COPY package*.json ./
-RUN npm ci
+RUN npm install --no-audit --no-fund --legacy-peer-deps
 
 # Copy source code and build
 COPY . .
 RUN npm run build
 
-# Production serve stage using lightweight static server
-FROM node:20-alpine
+# Production stage: nginx serves the static build and proxies /api to the backend
+FROM nginx:1.27-alpine
 
-WORKDIR /app
-
-RUN npm install -g serve
-
-COPY --from=builder /app/dist ./dist
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
 
 EXPOSE 3000
 
-CMD ["serve", "-s", "dist", "-l", "3000"]
+CMD ["nginx", "-g", "daemon off;"]
