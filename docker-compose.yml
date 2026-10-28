@@ -96,8 +96,8 @@ services:
       - ./pgadmin/servers.json:/pgadmin4/servers.json:ro
       - ./pgadmin/init.sh:/pgadmin-init.sh:ro
     ports:
-      # Bound to localhost for security; use an SSH tunnel to reach it on a remote server
-      - "127.0.0.1:5050:80"
+      # Localhost only by default; set PGADMIN_BIND=0.0.0.0 in .env to open it to the network
+      - "${PGADMIN_BIND:-127.0.0.1}:5050:80"
     networks:
       - blog_net
 
